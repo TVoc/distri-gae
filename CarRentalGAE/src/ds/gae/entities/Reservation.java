@@ -1,10 +1,18 @@
 package ds.gae.entities;
 
+import java.util.Date;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.OneToOne;
 
-public class Reservation extends Quote {
+import com.google.appengine.api.datastore.Key;
+
+@Entity
+public class Reservation {
 
     private int carId;
     
@@ -16,9 +24,8 @@ public class Reservation extends Quote {
     	
     }
     
-    Reservation(Quote quote, int carId) {
-    	super(quote.getCarRenter(), quote.getStartDate(), quote.getEndDate(), 
-    			quote.getRentalCompany(), quote.getCarType(), quote.getRentalPrice());
+    public Reservation(Quote quote, int carId) {
+    	this.quote = quote;
         this.carId = carId;
     }
     
@@ -30,13 +37,60 @@ public class Reservation extends Quote {
     	return carId;
     }
     
+    public void setCarId(int carId) {
+    	this.carId = carId;
+    }
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long dbId;
+    private Key key;
+    
+    public Key getKey() {
+    	return this.key;
+    }
+    
+    public void setKey(Key key) {
+    	this.key = key;
+    }
+    
+    @OneToOne(cascade = CascadeType.PERSIST)
+    private Quote quote;
+    
+    public Quote getQuote() {
+    	return this.quote;
+    }
+    
+    public void setQuote(Quote quote) {
+    	this.quote = quote;
+    }
     
     /*************
      * TO STRING *
      *************/
+    
+    public String getCarRenter() {
+    	return this.getQuote().getCarRenter();
+    }
+    
+    public Date getStartDate() {
+    	return this.getQuote().getStartDate();
+    }
+    
+    public Date getEndDate() {
+    	return this.getQuote().getEndDate();
+    }
+    
+    public String getRentalCompany() {
+    	return this.getQuote().getRentalCompany();
+    }
+    
+    public String getCarType() {
+    	return this.getQuote().getCarType();
+    }
+    
+    public double getRentalPrice() {
+    	return this.getQuote().getRentalPrice();
+    }
     
     @Override
     public String toString() {

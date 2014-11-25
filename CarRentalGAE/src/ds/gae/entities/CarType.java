@@ -31,6 +31,8 @@ public class CarType {
     //trunk space in liters
     private float trunkSpace;
 	
+	private String company;
+	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Key key;
@@ -81,6 +83,22 @@ public class CarType {
     
     public void setCars(List<Car> cars) {
     	this.cars = cars;
+    }
+    
+    public String getCompany() {
+    	return this.company;
+    }
+    
+    public void setCompany(String company) {
+    	this.company = company;
+    }
+    
+    public Key getKey() {
+    	return this.key;
+    }
+    
+    public void setKey(Key key) {
+    	this.key = key;
     }
     
     /*************

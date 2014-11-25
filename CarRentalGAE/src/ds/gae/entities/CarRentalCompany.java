@@ -40,6 +40,9 @@ public class CarRentalCompany {
 		logger.log(Level.INFO, "<{0}> Car Rental Company {0} starting up...", name);
 		setName(name);
 		this.types = types;
+		for (CarType type : types) {
+			type.setCompany(this.getName());
+		}
 	}
 
 	/********
@@ -170,7 +173,7 @@ public class CarRentalCompany {
 		Car car = availableCars.get((int)(Math.random()*availableCars.size()));
 		
 		Reservation res = new Reservation(quote, car.getId());
-		car.addReservation(res);
+		//car.addReservation(res);
 		return res;
 	}
 

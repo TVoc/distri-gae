@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
@@ -44,7 +45,7 @@ public class CarRentalModel {
 	 */
 	public Set<String> getCarTypesNames(String crcName) {
 		EntityManager em = EMF.get().createEntityManager();
-		TypedQuery<String> query = em.createQuery("SELECT t.name FROM CarType t, CarRentalCompany c WHERE t MEMBER OF types", String.class);
+		TypedQuery<String> query = em.createQuery("SELECT t.name FROM CarType t, CarRentalCompany c WHERE t MEMBER OF c.types", String.class);
 		
 		Set<String> toReturn = new HashSet<String>(query.getResultList());
 		em.close();
@@ -116,7 +117,16 @@ public class CarRentalModel {
 		EntityManager em = EMF.get().createEntityManager();
 		
 		CarRentalCompany crc = em.find(CarRentalCompany.class, q.getRentalCompany());
-        crc.confirmQuote(q);
+		
+		try {
+			Reservation res = crc.confirmQuote(q);
+			em.persist(res);
+		} catch (ReservationException e) {
+			throw e;
+		} finally {
+			em.close();
+		}
+        
 	}
 	
     /**
@@ -143,7 +153,9 @@ public class CarRentalModel {
     	try {
         	for (Quote quote : quotes) {
         		CarRentalCompany c = em.find(CarRentalCompany.class, quote.getRentalCompany());
-        		toReturn.add(c.confirmQuote(quote));
+        		Reservation res = c.confirmQuote(quote);
+        		em.persist(res);
+        		toReturn.add(res);
         	}
         	txn.commit();
     	} catch (ReservationException e) {
@@ -152,6 +164,7 @@ public class CarRentalModel {
     		if (txn.isActive()) {
     			txn.rollback();
     		}
+    		em.close();
     	}
     
     	return toReturn;
@@ -168,10 +181,17 @@ public class CarRentalModel {
 		// FIXME: use persistence instead
 		
 		EntityManager em = EMF.get().createEntityManager();
-		String queryString = "SELECT r FROM Reservation r WHERE carRenter = :renter";
-		TypedQuery<Reservation> query = em.createQuery(queryString, Reservation.class);
+		String queryString = "SELECT r FROM Reservation r";
+		Query query = em.createQuery(queryString);
+		query.setParameter("renter", renter);
     	
-		List<Reservation> toReturn = new ArrayList<Reservation>(query.getResultList());
+		List<Reservation> toReturn = new ArrayList<Reservation>();
+		for (Object obj : query.getResultList()) {
+			Reservation res = (Reservation) obj;
+			if (res.getCarRenter().equals(renter)) {
+				toReturn.add((Reservation) res);
+			}
+		}
 		em.close();
     	return toReturn;
     }
@@ -189,12 +209,18 @@ public class CarRentalModel {
     	EntityManager em = EMF.get().createEntityManager();
     	
     	CarRentalCompany crc = em.find(CarRentalCompany.class, crcName);
-    	String queryString = "SELECT t FROM CarType t, CarRentalCompany c WHERE c.name = :company AND t MEMBER OF c.types";
+    	String queryString = "SELECT c.types FROM CarRentalCompany c WHERE c.name = :company";
     	
-    	TypedQuery<CarType> query = em.createQuery(queryString, CarType.class);
+    	Query query = em.createQuery(queryString);
     	query.setParameter("company", crc.getName());
     	
-    	List<CarType> toReturn = new ArrayList<CarType>(query.getResultList());
+    	org.datanucleus.store.types.sco.backed.HashSet queryResult = (org.datanucleus.store.types.sco.backed.HashSet) query.getResultList().get(0);
+    	List<CarType> toReturn = new ArrayList<CarType>();
+    	
+    	for (Object type : queryResult) {
+    		toReturn.add((CarType) type);
+    	}
+    	
     	em.close();
     	return toReturn;
     }
@@ -243,11 +269,25 @@ public class CarRentalModel {
 		
 		CarRentalCompany company = em.find(CarRentalCompany.class, crcName);
 		
-		String queryString = "SELECT c FROM Car c, CarType t, CarRentalCompany comp WHERE comp = :company AND t IN types AND c IN cars";
-		TypedQuery<Car> query = em.createQuery(queryString, Car.class);
-		query.setParameter("company", company);
 		
-		List<Car> toReturn = new ArrayList<Car>(query.getResultList());
+		String queryString = "SELECT t FROM CarType t WHERE t.company = :company AND t.name = :name";
+		TypedQuery<CarType> query = em.createQuery(queryString, CarType.class);
+		query.setParameter("company", company.getName());
+		query.setParameter("name", carType.getName());
+		
+		CarType trueType = query.getResultList().get(0);
+		
+		queryString = "SELECT t.cars FROM CarType t WHERE t.key = :key";
+		Query newQuery = em.createQuery(queryString);
+		newQuery.setParameter("key", trueType.getKey());
+		
+		org.datanucleus.store.types.sco.backed.ArrayList queryResult = (org.datanucleus.store.types.sco.backed.ArrayList) newQuery.getResultList().get(0);
+    	List<Car> toReturn = new ArrayList<Car>();
+    	
+    	for (Object car : queryResult) {
+    		toReturn.add((Car) car);
+    	}
+    	
 		em.close();
 		return toReturn;
 	}
