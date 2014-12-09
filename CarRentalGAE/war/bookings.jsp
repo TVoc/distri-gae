@@ -1,6 +1,7 @@
 ﻿<%@page import="java.util.List"%>
 <%@page import="ds.gae.CarRentalModel"%>
 <%@page import="ds.gae.entities.Reservation"%>
+<%@page import="ds.gae.entities.Quote"%>
 <%@page import="ds.gae.view.JSPSite"%>
 <%@page import="ds.gae.view.ViewTools"%>
 <%@ page language="java" contentType="text/html; charset=UTF-8"
@@ -85,6 +86,76 @@ for (JSPSite site : JSPSite.publiclyLinkedValues()) {
 	} else {
 	 %>
 					<tr><td colspan="6">No Reservations</td></tr>
+	<%
+	} 
+	 %>			
+				</table>
+
+			</div>
+            
+            <div class="groupLabel">Failed quotes</div>
+			<div class="group">
+				<table>
+					<tr>
+						<th>Rental Company</th>					
+						<th>Car Type</th>
+						<th>Rental Period</th>
+						<th>Rental Price</th>			
+					</tr>
+						
+	<%
+	List<Quote> quotes = CarRentalModel.get().getFailedQuotes(renter);
+	
+	if ( quotes != null && quotes.size() > 0) {
+		
+		for (Quote q : quotes) { 
+	 %>
+					<tr>
+						<td><%= q.getRentalCompany()%></td>
+						<td><%= q.getCarType()%></td>
+						<td><%= ViewTools.DATE_FORMAT.format(q.getStartDate()) %> - <%= ViewTools.DATE_FORMAT.format(q.getEndDate())%></td>
+						<td class="numbers"><%= q.getRentalPrice()%> €</td>
+					</tr>
+	<%
+		} 
+	} else {
+	 %>
+					<tr><td colspan="6">No failed quotes</td></tr>
+	<%
+	} 
+	 %>			
+				</table>
+
+			</div>
+            
+            <div class="groupLabel">Quotes in progress</div>
+			<div class="group">
+				<table>
+					<tr>
+						<th>Rental Company</th>					
+						<th>Car Type</th>
+						<th>Rental Period</th>
+						<th>Rental Price</th>			
+					</tr>
+						
+	<%
+	quotes = CarRentalModel.get().getQuotesInProgress(renter);
+	
+	if ( quotes != null && quotes.size() > 0) {
+		
+		for (Quote q : quotes) { 
+	 %>
+					<tr>
+						<td><%= q.getRentalCompany()%></td>
+						<td><%= q.getCarType()%></td>
+						<td><%= ViewTools.DATE_FORMAT.format(q.getStartDate()) %> - <%= ViewTools.DATE_FORMAT.format(q.getEndDate())%></td>
+						<td class="numbers"><%= q.getRentalPrice()%> €</td>
+					</tr>
+	<%
+		} 
+	} else {
+	 %>
+					<tr><td colspan="6">No quotes in progress</td></tr>
 	<%
 	} 
 	 %>			

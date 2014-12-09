@@ -62,16 +62,12 @@ public class ConfirmQuotesTask implements DeferredTask {
     		
     		for (Reservation res : reservations) {
     			EntityManager resEm = EMF.get().createEntityManager();
-    			//Quote quote = resEm.find(Quote.class, res.getQuote().getKey()); /* quote must become attached, else deletion will
-    			//be delayed until next time Reservation table is queried, producing an error */
     			CarRentalCompany c = resEm.find(CarRentalCompany.class, res.getRentalCompany());
-    			//resEm.remove(quote);
     			c.cancelReservation(res);
     			resEm.close();
     		}
     	} finally {
     		for (Quote quote : this.getQuotes()) {
-    			System.out.println("Key: " + quote.getKey());
     			em = EMF.get().createEntityManager();
     			persQuote = em.find(Quote.class, quote.getKey());
     			persQuote.setCompleted(true);

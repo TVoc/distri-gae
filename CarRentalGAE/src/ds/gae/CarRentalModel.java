@@ -158,7 +158,6 @@ public class CarRentalModel {
     	
     	for (Quote quote : quotes) {
     		EntityManager em = EMF.get().createEntityManager();
-    		System.out.println("Before persist: " + quote.getKey());
     		em.persist(quote);
     		em.close();
     	}
@@ -195,6 +194,57 @@ public class CarRentalModel {
 		em.close();
     	return toReturn;
     }
+	
+	public List<Quote> getQuotesInProgress(String renter) {
+		EntityManager em = EMF.get().createEntityManager();
+		
+		String queryString = "SELECT q FROM Quote q WHERE q.carRenter = :renter AND q.completed = false";
+		
+		TypedQuery<Quote> query = em.createQuery(queryString, Quote.class);
+		query.setParameter("renter", renter);
+		
+		List<Quote> toReturn = query.getResultList();
+		em.close();
+		return toReturn;
+	}
+	
+	public List<Quote> getFailedQuotes(String renter) {
+		EntityManager em = EMF.get().createEntityManager();
+		
+		String queryString = "SELECT q FROM Quote q WHERE q.carRenter = :renter AND completed = true";
+		
+		TypedQuery<Quote> query = em.createQuery(queryString, Quote.class);
+		query.setParameter("renter", renter);
+		
+		List<Quote> queryResult = query.getResultList();
+		List<Quote> quotes = new ArrayList<Quote>();
+		quotes.addAll(queryResult);
+		
+		queryString = "SELECT r.quote FROM Reservation r";
+		
+		query = em.createQuery(queryString, Quote.class);
+		
+		List<Quote> resQuotes = query.getResultList();
+		
+		/*
+		org.datanucleus.store.types.sco.backed.HashSet queryResult = (org.datanucleus.store.types.sco.backed.HashSet) nQuery.getResultList().get(0);
+    	List<Quote> resQuotes = new ArrayList<Quote>();
+    	
+    	for (Object obj : queryResult) {
+    		Quote toAdd = (Quote) obj;
+    		if (toAdd.getCarRenter().equals(renter)) {
+    			resQuotes.add(toAdd);
+    		}
+    		
+    	}
+    	*/
+		
+		em.close();
+		
+		quotes.removeAll(resQuotes);
+		
+		return quotes;
+	}
 
     /**
      * Get the car types available in the given car rental company.
