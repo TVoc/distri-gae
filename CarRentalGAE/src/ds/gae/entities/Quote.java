@@ -19,25 +19,18 @@ public class Quote implements Serializable {
 	 */
 	private static final long serialVersionUID = 4861984279588293179L;
 
-	@Basic
     private Date startDate;
 	
-	@Basic
     private Date endDate;
 	
-	@Basic
     private String carRenter;
 	
-	@Basic
     private String rentalCompany;
 	
-	@Basic
     private String carType;
 	
-	@Basic
     private double rentalPrice;
 	
-	@Basic
 	private boolean completed;
 	
 	@Id
