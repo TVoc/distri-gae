@@ -10,6 +10,7 @@ import javax.persistence.Id;
 import javax.persistence.OneToOne;
 
 import com.google.appengine.api.datastore.Key;
+import com.google.appengine.datanucleus.annotations.Unowned;
 
 @Entity
 public class Reservation {
@@ -54,6 +55,7 @@ public class Reservation {
     }
     
     @OneToOne
+    @Unowned
     private Quote quote;
     
     public Quote getQuote() {

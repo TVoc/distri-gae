@@ -156,14 +156,14 @@ public class CarRentalModel {
     public void confirmQuotes(List<Quote> quotes) throws ReservationException {    	
 		// TODO add implementation
     	
-    	EntityManager em = EMF.get().createEntityManager();
-    	
     	for (Quote quote : quotes) {
+    		EntityManager em = EMF.get().createEntityManager();
     		System.out.println("Before persist: " + quote.getKey());
     		em.persist(quote);
+    		em.close();
     	}
     	
-    	em.close();
+    	
     	
     	ConfirmQuotesTask task = new ConfirmQuotesTask(quotes);
     	Queue queue = QueueFactory.getDefaultQueue();

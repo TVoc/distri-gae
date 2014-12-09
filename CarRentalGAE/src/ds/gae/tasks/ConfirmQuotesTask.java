@@ -40,32 +40,26 @@ public class ConfirmQuotesTask implements DeferredTask {
 	public void run() {
 		
 		List<Reservation> reservations = new LinkedList<Reservation>();
+		EntityManager em = null;
+		Quote persQuote = null;
 		
 		try {
         	for (Quote quote : this.getQuotes()) {
-        		EntityManager em = EMF.get().createEntityManager();
-        		Quote persQuote = em.find(Quote.class, quote.getKey());
-        		em.remove(persQuote);
-        		em.close();
-        		System.out.println("Removed key: " + persQuote.getKey());
-        		persQuote.setKey(null);
-        		System.out.println("After null: " + persQuote.getKey());
-        		EntityManager newEm = EMF.get().createEntityManager();
-        		System.out.println("Reached");
-        		CarRentalCompany c = newEm.find(CarRentalCompany.class, quote.getRentalCompany());
-        		Reservation res = c.confirmQuote(persQuote);
-        		System.out.println("Reached 2");
-        		newEm.persist(persQuote);
-        		System.out.println("Reached 3");
-        		newEm.persist(res);
-        		System.out.println("Reached 4");
+        		em = EMF.get().createEntityManager();
+        		persQuote =  em.find(Quote.class, quote.getKey());
+        		
+        		em.detach(persQuote);
+        		CarRentalCompany c = em.find(CarRentalCompany.class, quote.getRentalCompany());
+        		Reservation res = c.confirmQuote(persQuote);        		
+        		em.persist(res);
+        		em.merge(persQuote);
+        		
         		reservations.add(res);
-        		System.out.println("Reached 5");
-        		newEm.close();
-        		System.out.println("Re-added key: " + persQuote.getKey());
-        		quote.setKey(persQuote.getKey());
+        		em.close();        		
         	}
     	} catch (ReservationException e) {
+    		em.close();
+    		
     		for (Reservation res : reservations) {
     			EntityManager resEm = EMF.get().createEntityManager();
     			//Quote quote = resEm.find(Quote.class, res.getQuote().getKey()); /* quote must become attached, else deletion will
@@ -78,8 +72,8 @@ public class ConfirmQuotesTask implements DeferredTask {
     	} finally {
     		for (Quote quote : this.getQuotes()) {
     			System.out.println("Key: " + quote.getKey());
-    			EntityManager em = EMF.get().createEntityManager();
-    			Quote persQuote = em.find(Quote.class, quote.getKey());
+    			em = EMF.get().createEntityManager();
+    			persQuote = em.find(Quote.class, quote.getKey());
     			persQuote.setCompleted(true);
     			em.close();
     		}
