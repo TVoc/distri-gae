@@ -1,5 +1,6 @@
 package ds.gae.entities;
 
+import java.io.Serializable;
 import java.util.Date;
 
 import javax.persistence.Basic;
@@ -11,7 +12,12 @@ import javax.persistence.Id;
 import com.google.appengine.api.datastore.Key;
 
 @Entity
-public class Quote {
+public class Quote implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 4861984279588293179L;
 
 	@Basic
     private Date startDate;
@@ -30,6 +36,9 @@ public class Quote {
 	
 	@Basic
     private double rentalPrice;
+	
+	@Basic
+	private boolean completed;
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -83,6 +92,14 @@ public class Quote {
     public String getCarType() {
 		return carType;
 	}
+    
+    public boolean getCompleted() {
+    	return completed;
+    }
+    
+    public void setCompleted(boolean completed) {
+    	this.completed = completed;
+    }
     
     /*************
      * TO STRING *

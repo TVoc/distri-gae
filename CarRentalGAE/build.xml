@@ -10,6 +10,11 @@
 				<exclude name="WEB-INF/classes/**"/>
 			</zipfileset>
 			<zipfileset dir="." includes="build.xml" />
+			<fileset dir="." casesensitive="no">
+			  <include name="*.txt"/>
+			  <include name="*.pdf"/>
+			</fileset>			
+			
 		</zip>
 	</target>
 </project>

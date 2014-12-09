@@ -15,6 +15,9 @@ import javax.persistence.TypedQuery;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.Transaction;
+import com.google.appengine.api.taskqueue.Queue;
+import com.google.appengine.api.taskqueue.QueueFactory;
+import com.google.appengine.api.taskqueue.TaskOptions;
 
 import ds.gae.entities.Car;
 import ds.gae.entities.CarRentalCompany;
@@ -22,6 +25,7 @@ import ds.gae.entities.CarType;
 import ds.gae.entities.Quote;
 import ds.gae.entities.Reservation;
 import ds.gae.entities.ReservationConstraints;
+import ds.gae.tasks.ConfirmQuotesTask;
  
 public class CarRentalModel {
 	
@@ -45,9 +49,18 @@ public class CarRentalModel {
 	 */
 	public Set<String> getCarTypesNames(String crcName) {
 		EntityManager em = EMF.get().createEntityManager();
-		TypedQuery<String> query = em.createQuery("SELECT t.name FROM CarType t, CarRentalCompany c WHERE t MEMBER OF c.types", String.class);
+		String queryString = "SELECT c.types FROM CarRentalCompany c WHERE c.name = :company";
+		Query query = em.createQuery(queryString);
+		query.setParameter("company", crcName);
 		
-		Set<String> toReturn = new HashSet<String>(query.getResultList());
+		org.datanucleus.store.types.sco.backed.HashSet queryResult = (org.datanucleus.store.types.sco.backed.HashSet) query.getResultList().get(0);
+
+    	Set<String> toReturn = new HashSet<String>();
+    	
+    	for (Object type : queryResult) {
+    		toReturn.add(((CarType) type).getName());
+    	}
+    	
 		em.close();
 		return toReturn;
 	}
@@ -140,34 +153,21 @@ public class CarRentalModel {
 	 * 			One of the quotes cannot be confirmed. 
 	 * 			Therefore none of the given quotes is confirmed.
 	 */
-    public List<Reservation> confirmQuotes(List<Quote> quotes) throws ReservationException {    	
+    public void confirmQuotes(List<Quote> quotes) throws ReservationException {    	
 		// TODO add implementation
     	
-    	List<Reservation> toReturn = new ArrayList<Reservation>();
-    	
-    	DatastoreService ds = DatastoreServiceFactory.getDatastoreService();
     	EntityManager em = EMF.get().createEntityManager();
     	
-    	Transaction txn = ds.beginTransaction();
-    	
-    	try {
-        	for (Quote quote : quotes) {
-        		CarRentalCompany c = em.find(CarRentalCompany.class, quote.getRentalCompany());
-        		Reservation res = c.confirmQuote(quote);
-        		em.persist(res);
-        		toReturn.add(res);
-        	}
-        	txn.commit();
-    	} catch (ReservationException e) {
-    		throw e;
-    	} finally {
-    		if (txn.isActive()) {
-    			txn.rollback();
-    		}
-    		em.close();
+    	for (Quote quote : quotes) {
+    		System.out.println("Before persist: " + quote.getKey());
+    		em.persist(quote);
     	}
-    
-    	return toReturn;
+    	
+    	em.close();
+    	
+    	ConfirmQuotesTask task = new ConfirmQuotesTask(quotes);
+    	Queue queue = QueueFactory.getDefaultQueue();
+    	queue.add(TaskOptions.Builder.withPayload(task));
     }
 	
 	/**

@@ -19,7 +19,7 @@ public class Car {
 
     private int id;
     
-    @OneToMany(cascade = CascadeType.PERSIST)
+    @OneToMany(cascade = CascadeType.ALL)
     private Set<Reservation> reservations;
 
     /***************

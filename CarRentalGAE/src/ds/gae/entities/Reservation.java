@@ -53,7 +53,7 @@ public class Reservation {
     	this.key = key;
     }
     
-    @OneToOne(cascade = CascadeType.PERSIST)
+    @OneToOne
     private Quote quote;
     
     public Quote getQuote() {
