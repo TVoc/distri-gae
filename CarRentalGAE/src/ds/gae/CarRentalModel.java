@@ -49,8 +49,7 @@ public class CarRentalModel {
 	 */
 	public Set<String> getCarTypesNames(String crcName) {
 		EntityManager em = EMF.get().createEntityManager();
-		String queryString = "SELECT c.types FROM CarRentalCompany c WHERE c.name = :company";
-		Query query = em.createQuery(queryString);
+		Query query = em.createNamedQuery("CarRentalCompany.types");
 		query.setParameter("company", crcName);
 		
 		org.datanucleus.store.types.sco.backed.HashSet queryResult = (org.datanucleus.store.types.sco.backed.HashSet) query.getResultList().get(0);
@@ -73,8 +72,7 @@ public class CarRentalModel {
     public Collection<String> getAllRentalCompanyNames() {
     	EntityManager em = EMF.get().createEntityManager();
     	
-		String queryString = "SELECT c.name FROM CarRentalCompany c";
-		TypedQuery<String> query = em.createQuery(queryString, String.class);
+		TypedQuery<String> query = em.createNamedQuery("CarRentalCompany.names", String.class);
 		
 		List<String> toReturn = new ArrayList<String>(query.getResultList());
 		em.close();
@@ -133,6 +131,7 @@ public class CarRentalModel {
 		
 		try {
 			Reservation res = crc.confirmQuote(q);
+			em.persist(q);
 			em.persist(res);
 		} catch (ReservationException e) {
 			throw e;
@@ -180,8 +179,7 @@ public class CarRentalModel {
 		// FIXME: use persistence instead
 		
 		EntityManager em = EMF.get().createEntityManager();
-		String queryString = "SELECT r FROM Reservation r";
-		Query query = em.createQuery(queryString);
+		Query query = em.createNamedQuery("Reservation.all");
 		query.setParameter("renter", renter);
     	
 		List<Reservation> toReturn = new ArrayList<Reservation>();
@@ -198,9 +196,8 @@ public class CarRentalModel {
 	public List<Quote> getQuotesInProgress(String renter) {
 		EntityManager em = EMF.get().createEntityManager();
 		
-		String queryString = "SELECT q FROM Quote q WHERE q.carRenter = :renter AND q.completed = false";
 		
-		TypedQuery<Quote> query = em.createQuery(queryString, Quote.class);
+		TypedQuery<Quote> query = em.createNamedQuery("Quote.inProgress", Quote.class);
 		query.setParameter("renter", renter);
 		
 		List<Quote> toReturn = query.getResultList();
@@ -211,18 +208,16 @@ public class CarRentalModel {
 	public List<Quote> getFailedQuotes(String renter) {
 		EntityManager em = EMF.get().createEntityManager();
 		
-		String queryString = "SELECT q FROM Quote q WHERE q.carRenter = :renter AND completed = true";
 		
-		TypedQuery<Quote> query = em.createQuery(queryString, Quote.class);
+		TypedQuery<Quote> query = em.createNamedQuery("Quote.completed", Quote.class);
 		query.setParameter("renter", renter);
 		
 		List<Quote> queryResult = query.getResultList();
 		List<Quote> quotes = new ArrayList<Quote>();
 		quotes.addAll(queryResult);
 		
-		queryString = "SELECT r.quote FROM Reservation r";
 		
-		query = em.createQuery(queryString, Quote.class);
+		query = em.createNamedQuery("Quote.fromReservations", Quote.class);
 		
 		List<Quote> resQuotes = query.getResultList();
 		
@@ -259,9 +254,8 @@ public class CarRentalModel {
     	EntityManager em = EMF.get().createEntityManager();
     	
     	CarRentalCompany crc = em.find(CarRentalCompany.class, crcName);
-    	String queryString = "SELECT c.types FROM CarRentalCompany c WHERE c.name = :company";
     	
-    	Query query = em.createQuery(queryString);
+    	Query query = em.createNamedQuery("CarRentalCompany.types");
     	query.setParameter("company", crc.getName());
     	
     	org.datanucleus.store.types.sco.backed.HashSet queryResult = (org.datanucleus.store.types.sco.backed.HashSet) query.getResultList().get(0);
@@ -320,15 +314,13 @@ public class CarRentalModel {
 		CarRentalCompany company = em.find(CarRentalCompany.class, crcName);
 		
 		
-		String queryString = "SELECT t FROM CarType t WHERE t.company = :company AND t.name = :name";
-		TypedQuery<CarType> query = em.createQuery(queryString, CarType.class);
+		TypedQuery<CarType> query = em.createNamedQuery("CarType.fromCompanyAndName", CarType.class);
 		query.setParameter("company", company.getName());
 		query.setParameter("name", carType.getName());
 		
 		CarType trueType = query.getResultList().get(0);
 		
-		queryString = "SELECT t.cars FROM CarType t WHERE t.key = :key";
-		Query newQuery = em.createQuery(queryString);
+		Query newQuery = em.createNamedQuery("Car.fromType");
 		newQuery.setParameter("key", trueType.getKey());
 		
 		org.datanucleus.store.types.sco.backed.ArrayList queryResult = (org.datanucleus.store.types.sco.backed.ArrayList) newQuery.getResultList().get(0);

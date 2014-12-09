@@ -8,10 +8,17 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 
 import com.google.appengine.api.datastore.Key;
 
 @Entity
+@NamedQueries({
+	@NamedQuery(name = "Quote.inProgress", query = "SELECT q FROM Quote q WHERE q.carRenter = :renter AND q.completed = false"),
+	@NamedQuery(name = "Quote.completed", query = "SELECT q FROM Quote q WHERE q.carRenter = :renter AND q.completed = true"),
+	@NamedQuery(name = "Quote.fromReservations", query = "SELECT r.quote FROM Reservation r")
+})
 public class Quote implements Serializable {
 
 	/**

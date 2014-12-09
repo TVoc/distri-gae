@@ -8,11 +8,18 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 
 import com.google.appengine.api.datastore.Key;
 
+
 @Entity
+@NamedQueries({
+	@NamedQuery(name = "CarType.fromCompany", query = "SELECT c.types FROM CarRentalCompany c WHERE c.name = :company"),
+	@NamedQuery(name = "CarType.fromCompanyAndName", query = "SELECT t FROM CarType t WHERE t.company = :company AND t.name = :name")
+})
 public class CarType {
     
 	@Basic
